@@ -1,0 +1,180 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NOVA AI CORE</title>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;background:#050b18;color:#eaf7ff;
+ font-family:Arial,sans-serif;padding:18px
+}
+main{
+ max-width:700px;margin:25px auto;padding:24px;
+ background:#0b1930;border:1px solid #087dba;
+ border-radius:22px;box-shadow:0 0 30px #007bbb33
+}
+h1{color:#36caff;text-align:center;font-size:42px}
+.sub{text-align:center;color:#91b7d5}
+.status{text-align:center;color:#40ffb0}
+.screen{
+ background:#061120;border:1px solid #16456a;
+ padding:16px;border-radius:14px;min-height:260px;
+ max-height:350px;overflow:auto;margin:20px 0
+}
+.message{padding:12px;margin:9px 0;border-radius:10px;line-height:1.7}
+.nova{background:#102d49}
+.user{background:#173b32}
+input{
+ width:100%;padding:15px;border-radius:10px;
+ border:1px solid #087dbb;background:#071426;
+ color:white;font-size:16px
+}
+button{
+ background:#087dbb;color:white;border:0;
+ padding:13px 18px;border-radius:10px;
+ margin:6px;cursor:pointer;font-size:15px
+}
+button:hover{background:#00a9ed}
+.controls{text-align:center;margin-top:12px}
+.info{
+ background:#071426;padding:15px;border-radius:12px;
+ margin-top:20px;line-height:2
+}
+</style>
+</head>
+<body>
+<main>
+ <h1>NOVA</h1>
+ <p class="sub">AI CORE — MARK 1</p>
+ <p class="status">● SYSTEM ONLINE</p>
+
+ <div class="screen" id="chat">
+  <div class="message nova">
+   NOVA: مرحباً! أنا مساعدك الذكي. كيف أساعدك؟
+  </div>
+ </div>
+
+ <input id="question" placeholder="اكتب رسالة إلى NOVA...">
+
+ <div class="controls">
+  <button onclick="sendMessage()">إرسال</button>
+  <button onclick="listen()">🎙️ تحدث</button>
+  <button onclick="clearChat()">مسح المحادثة</button>
+ </div>
+
+ <div class="info">
+  <b>حالة النظام</b><br>
+  النواة: ONLINE<br>
+  الصوت: جاهز عند دعم المتصفح<br>
+  الذاكرة المؤقتة: مفعّلة<br>
+  الاتصال بأجهزة البدلة: غير متصل
+ </div>
+</main>
+
+<script>
+const chat = document.getElementById("chat");
+const question = document.getElementById("question");
+let memory = [];
+
+function addMessage(role, text){
+ const item = document.createElement("div");
+ item.className = "message " + role;
+ item.textContent = (role === "user" ? "أنت: " : "NOVA: ") + text;
+ chat.appendChild(item);
+ chat.scrollTop = chat.scrollHeight;
+}
+
+function speak(text){
+ if(!("speechSynthesis" in window)) return;
+ speechSynthesis.cancel();
+ const voice = new SpeechSynthesisUtterance(text);
+ voice.lang = "ar-SA";
+ voice.rate = 1;
+ speechSynthesis.speak(voice);
+}
+
+function remember(role, text){
+ memory.push({role, text});
+ if(memory.length > 20) memory.shift();
+}
+
+function reply(text){
+ remember("nova", text);
+ addMessage("nova", text);
+ speak(text);
+}
+
+function sendMessage(){
+ const text = question.value.trim();
+ if(!text) return;
+
+ question.value = "";
+ remember("user", text);
+ addMessage("user", text);
+
+ const q = text.toLowerCase();
+
+ if(q.includes("مرحبا") || q.includes("السلام")){
+  reply("أهلاً بك! أنا NOVA، مساعدك الذكي.");
+ }
+ else if(q.includes("اسمك")){
+  reply("اسمي NOVA AI CORE، النواة الذكية للمشروع.");
+ }
+ else if(q.includes("حالة") || q.includes("النظام")){
+  reply("النظام البرمجي يعمل بشكل طبيعي. الأجهزة الخارجية غير متصلة.");
+ }
+ else if(q.includes("ذاكرة") || q.includes("تذكر")){
+  reply("أتذكر آخر عشرين رسالة خلال تشغيل الصفحة الحالية.");
+ }
+ else if(q.includes("الوقت")){
+  reply("الوقت الآن " + new Date().toLocaleTimeString("ar"));
+ }
+ else if(q.includes("شكرا")){
+  reply("العفو! أنا هنا لمساعدتك.");
+ }
+ else{
+  reply("وصلت رسالتك! هذه النسخة تجريبية، ولم يتم ربطها بعد بذكاء اصطناعي حقيقي.");
+ }
+}
+
+function listen(){
+ const SpeechRecognition =
+  window.SpeechRecognition || window.webkitSpeechRecognition;
+
+ if(!SpeechRecognition){
+  reply("التعرف على الصوت غير مدعوم في هذا المتصفح.");
+  return;
+ }
+
+ const recognition = new SpeechRecognition();
+ recognition.lang = "ar-DZ";
+ recognition.interimResults = false;
+
+ recognition.onresult = function(event){
+  question.value = event.results[0][0].transcript;
+  sendMessage();
+ };
+
+ recognition.onerror = function(){
+  reply("لم أستطع سماعك. حاول مرة أخرى.");
+ };
+
+ recognition.start();
+}
+
+function clearChat(){
+ memory = [];
+ chat.innerHTML = "";
+ addMessage("nova", "تم بدء محادثة جديدة. كيف أساعدك؟");
+}
+
+question.addEventListener("keydown", function(event){
+ if(event.key === "Enter") sendMessage();
+});
+</script>
+</body>
+</html>
+
